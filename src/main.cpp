@@ -4,10 +4,17 @@
 #include <string>
 #include <sstream>
 #include <filesystem>
+#include <nlohmann\json.hpp>
+#include <CompilationDatabase.hpp>
 
 namespace fs = std::filesystem;
 
 int main() {
+    fs::path dir_path = "C:\\Users\\nikok\\projects\\clair_target\\build";
+    fs::path full_path = dir_path / "compile_commands.json";
+
+    CompilationDb db(full_path);
+
     std::cout << "--- Libclang testing... ---\n";
 
     CXIndex index = clang_createIndex(0, 0);
@@ -16,16 +23,25 @@ int main() {
         return 1;
     }
 
-    const char* source = R"(C:\Users\nikok\projects\clair\src\test_file.cpp)";
-    const char* args[] = {
-        "-DDEBUG",
-        "-I\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\include\""
-    };
+    const char* source = "C:\\Users\\nikok\\projects\\clair_target\\src\\main.cpp";
+
+    std::vector<const char*> flags_c;
+    std::vector<std::string> flags_str = db.get_flags();
+
+    // Set the target architecture, OS, and environment (MSVC)
+    // Crucial for libclang to correctly interpret MSVC/Windows system headers.
+    flags_c.push_back("--target=x86_64-pc-windows-msvc");
+
+    // Parse flags from vector<std::string> to vector<const char *>
+    for (const auto& item : flags_str) {
+        flags_c.push_back(item.c_str());
+    }
 
     CXTranslationUnit tu = clang_parseTranslationUnit(
         index,
         source,
-        args, 2,
+        flags_c.data(),
+        (int)flags_c.size(),
         nullptr, 0,
         CXTranslationUnit_None
     );
