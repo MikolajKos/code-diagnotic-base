@@ -52,7 +52,7 @@ CXCursor findContainingFunc(CXCursor cursor) {
 }
 
 std::string getFileContents(std::string filename) {
-	std::ifstream file(filename);
+	std::ifstream file(filename, std::ios::binary);
 	if (!file) {
 		std::cerr << "Cannot open the file\n";
 		return "	";
@@ -94,7 +94,7 @@ std::string getSourceText(CXSourceRange range) {
 
 	// Reading data by offset
 	unsigned int length = end_offset - start_offset;
-	if (end_offset <= start_offset || (start_offset + length) > file_contents.length()) {
+	if (end_offset < start_offset || (start_offset + length) > file_contents.length()) {
 		return "Error: incorrect range\n";
 	}
 
